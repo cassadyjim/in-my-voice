@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Generate IMV prompt using OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo',  // Changed from gpt-4
       messages: [
         {
           role: 'system',
