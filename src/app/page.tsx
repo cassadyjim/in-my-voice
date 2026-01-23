@@ -1,8 +1,19 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Check if user is already logged in
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  // If logged in, redirect to dashboard
+  if (user) {
+    redirect('/app/dashboard')
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Navigation */}
