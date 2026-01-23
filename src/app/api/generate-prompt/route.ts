@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Generate IMV prompt using OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',  // Back to GPT-4
+      model: 'gpt-4o',  // You have access to this!
       messages: [
         {
           role: 'system',
