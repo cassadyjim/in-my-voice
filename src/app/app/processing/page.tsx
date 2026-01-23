@@ -58,15 +58,33 @@ export default function ProcessingPage() {
 
       setStatus('Saving your IMV prompt...')
 
-      // Save prompt to database
+      // Get the next version number
+      const { data: existingVersions } = await supabase
+        .from('prompt_versions')
+        .select('version_num')
+        .eq('user_id', user.id)
+        .order('version_num', { ascending: false })
+        .limit(1)
+
+      const nextVersion = existingVersions && existingVersions.length > 0 
+        ? existingVersions[0].version_num + 1 
+        : 1
+
+      // Deactivate all previous versions
+      await supabase
+        .from('prompt_versions')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+
+      // Save new prompt version
       const { error: promptError } = await supabase
         .from('prompt_versions')
         .insert({
           user_id: user.id,
-          version_num: 1,
+          version_num: nextVersion,
           prompt_text: prompt,
           is_active: true,
-          generation_params: { model: 'gpt-4', temperature: 0.7 }
+          generation_params: { model: 'gpt-4o', temperature: 0.7 }
         })
 
       if (promptError) throw promptError
