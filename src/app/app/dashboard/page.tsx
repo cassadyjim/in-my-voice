@@ -2,11 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import Link from 'next/link'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   
-  // Check if user is logged in
   const { data: { user }, error } = await supabase.auth.getUser()
   
   if (error || !user) {
@@ -57,9 +57,11 @@ export default async function DashboardPage() {
                 <p className="text-slate-600 mb-4">
                   Share 10-20 examples of your emails, messages, or documents so we can learn your voice.
                 </p>
-                <Button size="lg">
-                  Start Onboarding →
-                </Button>
+                <Link href="/app/onboarding">
+                  <Button size="lg">
+                    Start Onboarding →
+                  </Button>
+                </Link>
               </div>
             </div>
           </Card>
