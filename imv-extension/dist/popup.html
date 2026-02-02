@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>In My Voice</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">🎤</span>
+        <span class="logo-text">In My Voice</span>
+      </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading" class="section">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+
+    <!-- Login Section (shown when logged out) -->
+    <div id="login-section" class="section hidden">
+      <h2>Sign In</h2>
+      <p class="subtitle">Log in on the IMV website to sync your voice prompt</p>
+
+      <button id="login-website-btn" class="btn btn-primary">
+        Log In on Website
+      </button>
+
+      <p class="help-text" style="margin-top: 16px;">
+        After logging in, come back here and click the button below:
+      </p>
+
+      <button id="check-login-btn" class="btn btn-secondary">
+        Check Login Status
+      </button>
+
+      <div id="login-message" class="message hidden"></div>
+
+      <p class="help-text">
+        Don't have an account? <a href="https://in-my-voice.vercel.app" target="_blank">Create one here</a>
+      </p>
+    </div>
+
+    <!-- Main Section (shown when logged in) -->
+    <div id="main-section" class="section hidden">
+      <!-- User Info -->
+      <div class="user-info">
+        <span class="user-badge">✓ Logged in</span>
+        <span id="user-email" class="user-email"></span>
+      </div>
+
+      <!-- Prompt Preview -->
+      <div id="prompt-card" class="card">
+        <div class="card-header">
+          <h3>Your IMV Prompt</h3>
+          <span id="version-badge" class="badge">v1</span>
+        </div>
+        <div id="prompt-preview" class="prompt-preview">
+          Loading prompt...
+        </div>
+        <div class="card-actions">
+          <button id="copy-btn" class="btn btn-secondary btn-small">
+            Copy
+          </button>
+          <button id="view-full-btn" class="btn btn-secondary btn-small">
+            View Full
+          </button>
+        </div>
+      </div>
+
+      <!-- No Prompt State -->
+      <div id="no-prompt" class="card hidden">
+        <p>No voice prompt found. Generate one on the IMV dashboard.</p>
+        <a href="https://in-my-voice.vercel.app/app/onboarding" target="_blank" class="btn btn-primary">
+          Create Voice Profile
+        </a>
+      </div>
+
+      <!-- Sync Info -->
+      <div class="sync-info">
+        <span id="last-sync">Last synced: Never</span>
+        <button id="sync-btn" class="btn btn-link">
+          🔄 Sync Now
+        </button>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <a href="https://in-my-voice.vercel.app/app/dashboard" target="_blank" class="btn btn-secondary">
+          Open Dashboard
+        </a>
+        <button id="logout-btn" class="btn btn-ghost">
+          Log Out
+        </button>
+      </div>
+    </div>
+
+    <!-- Full Prompt Modal -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Full IMV Prompt</h3>
+          <button id="modal-close" class="modal-close">&times;</button>
+        </div>
+        <div id="modal-body" class="modal-body">
+          <!-- Prompt text here -->
+        </div>
+        <div class="modal-footer">
+          <button id="modal-copy" class="btn btn-primary">Copy to Clipboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

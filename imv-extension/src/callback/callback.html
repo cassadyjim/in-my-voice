@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMV Login</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+    }
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      max-width: 400px;
+    }
+    .logo {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .status {
+      font-size: 16px;
+      opacity: 0.9;
+      margin-bottom: 24px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .success {
+      color: #10b981;
+    }
+    .error {
+      color: #ef4444;
+    }
+    .message {
+      margin-top: 16px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    .btn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: white;
+      color: #764ba2;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🎤</div>
+    <h1>In My Voice</h1>
+
+    <div id="loading">
+      <div class="spinner"></div>
+      <p class="status">Completing login...</p>
+    </div>
+
+    <div id="success" class="hidden">
+      <p class="status success">✓ Login successful!</p>
+      <p class="message">You can close this tab and return to ChatGPT.</p>
+      <button class="btn" onclick="window.close()">Close Tab</button>
+    </div>
+
+    <div id="error" class="hidden">
+      <p class="status error">✗ Login failed</p>
+      <p class="message" id="error-message"></p>
+      <button class="btn" onclick="window.close()">Close Tab</button>
+    </div>
+  </div>
+
+  <script src="callback.js"></script>
+</body>
+</html>

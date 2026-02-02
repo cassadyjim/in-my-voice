@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { parsePrompt, formatDate, type ParsedPrompt } from '@/lib/prompt-parser'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { PlatformExports } from './PlatformExports'
 
 interface PromptVersion {
   id: number
@@ -190,6 +191,24 @@ export function ProfileTab({ promptVersion }: ProfileTabProps) {
           </Card>
         </div>
       </div>
+
+      {/* Platform Exports */}
+      <PlatformExports />
+
+      {/* Quick Actions */}
+      <Card className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-purple-900">Ready to write?</h3>
+            <p className="text-sm text-purple-700">Use IMV Chat to write content in your voice</p>
+          </div>
+          <Link href="/app/chat">
+            <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+              Open IMV Chat →
+            </Button>
+          </Link>
+        </div>
+      </Card>
     </div>
   )
 }
