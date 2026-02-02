@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ProfileTab } from './ProfileTab'
-import { PlaygroundTab } from './PlaygroundTab'
-import { RefineTab } from './RefineTab'
 import { HistoryTab } from './HistoryTab'
 
 interface PromptVersion {
@@ -27,7 +25,7 @@ export function DashboardTabs({ activePrompt, allVersions, userId }: DashboardTa
   const [versions, setVersions] = useState<PromptVersion[]>(allVersions)
   const [currentPrompt, setCurrentPrompt] = useState<PromptVersion | null>(activePrompt)
 
-  // Refresh versions after changes (refinement, restore)
+  // Refresh versions after changes (restore)
   const handleVersionsChanged = (newVersions: PromptVersion[], newActive: PromptVersion | null) => {
     setVersions(newVersions)
     setCurrentPrompt(newActive)
@@ -35,27 +33,13 @@ export function DashboardTabs({ activePrompt, allVersions, userId }: DashboardTa
 
   return (
     <Tabs defaultValue="profile" className="w-full">
-      <TabsList className="grid w-full grid-cols-4 mb-6">
+      <TabsList className="grid w-full grid-cols-2 mb-6">
         <TabsTrigger value="profile">Profile</TabsTrigger>
-        <TabsTrigger value="playground">Test</TabsTrigger>
-        <TabsTrigger value="refine">Refine</TabsTrigger>
         <TabsTrigger value="history">History</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile">
         <ProfileTab promptVersion={currentPrompt} />
-      </TabsContent>
-
-      <TabsContent value="playground">
-        <PlaygroundTab promptText={currentPrompt?.prompt_text || ''} />
-      </TabsContent>
-
-      <TabsContent value="refine">
-        <RefineTab
-          currentPrompt={currentPrompt}
-          userId={userId}
-          onVersionCreated={handleVersionsChanged}
-        />
       </TabsContent>
 
       <TabsContent value="history">

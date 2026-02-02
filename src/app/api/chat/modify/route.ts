@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's active IMV prompt
+    // Get user's active IMV prompt - FULL prompt, not truncated
     const { data: activePrompt } = await supabase
       .from('prompt_versions')
       .select('prompt_text')
@@ -48,28 +48,43 @@ export async function POST(request: NextRequest) {
       .eq('is_active', true)
       .single()
 
-    // Build the modification request - MODIFICATION TAKES PRIORITY
     const modificationInstruction = MODIFICATION_PROMPTS[modification_type]
 
-    // Put modification instruction FIRST, voice profile second
-    const systemPrompt = `You are a writing modification assistant. Your PRIMARY task is to apply the requested modification. This takes priority over everything else.
+    // IMV VOICE IS PRIMARY - modification is the specific task
+    const systemPrompt = activePrompt
+      ? `${activePrompt.prompt_text}
+
+===========================================
+MODIFICATION TASK
+===========================================
 
 ${modificationInstruction}
 
-${activePrompt ? `SECONDARY: While applying the modification, try to maintain elements of this voice profile where possible (but the modification instruction above takes priority):
+CRITICAL RULES FOR THIS MODIFICATION:
+1. The IMV voice profile above is PRIMARY - maintain it throughout
+2. Apply the modification while staying within the user's voice
+3. Do NOT introduce words, phrases, or patterns not in the voice profile
+4. Check the Avoidance Patterns section - do not use those phrases
+5. Use only Signature Patterns that fit the context
+6. The result must still sound like the user wrote it
 
-${activePrompt.prompt_text.substring(0, 1500)}...` : ''}
-
-OUTPUT RULES:
+OUTPUT:
 - Output ONLY the modified text
-- No explanations, no preamble, no "Here's the modified version:"
-- Just the final modified content`
+- No explanations or preamble
+- Just the final content in the user's voice`
+      : `You are a helpful writing assistant.
+
+${modificationInstruction}
+
+OUTPUT:
+- Output ONLY the modified text
+- No explanations or preamble`
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt },
       {
         role: 'user',
-        content: `Modify this content according to the instructions above:
+        content: `Apply the modification to this content while maintaining my voice:
 
 ${original_content}`,
       },
@@ -78,7 +93,7 @@ ${original_content}`,
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
-      temperature: Math.min(temperature + 0.1, 1.0), // Slightly higher temp for variations
+      temperature: temperature,
       max_tokens: 2000,
     })
 

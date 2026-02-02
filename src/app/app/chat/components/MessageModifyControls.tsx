@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { ModificationType } from '@/lib/modification-prompts'
+import { AddRuleControl } from './AddRuleControl'
 
 export type { ModificationType }
 
@@ -85,6 +86,12 @@ export function MessageModifyControls({ onModify, isLoading }: MessageModifyCont
           <span>🔄</span>
           <span>Rewrite</span>
         </button>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-gray-300 mx-1" />
+
+        {/* Flag phrase button */}
+        <AddRuleControl />
       </div>
 
       {isLoading && (

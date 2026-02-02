@@ -1,4 +1,5 @@
 // Modification types and prompts - shared between client and server
+// IMPORTANT: These prompts must RESPECT the user's IMV voice profile
 
 export type ModificationType =
   | 'shorter'
@@ -12,78 +13,76 @@ export type ModificationType =
   | 'audience_executive'
   | 'rewrite'
 
-// These prompts are designed to be ASSERTIVE and override default behavior
+// These prompts work WITH the IMV voice profile, not against it
 export const MODIFICATION_PROMPTS: Record<ModificationType, string> = {
-  shorter: `CRITICAL INSTRUCTION: Make this SIGNIFICANTLY shorter.
-- Cut the length by AT LEAST 40-50%
-- Remove all filler words, redundant phrases, and unnecessary details
-- Keep only the essential message
-- Combine sentences where possible
-- This MUST be noticeably shorter than the original`,
+  shorter: `MODIFICATION: Make this shorter.
+- Cut length by 30-50%
+- Remove filler and redundancy
+- Keep essential message and voice markers
+- Preserve the user's signature patterns and sentence rhythm
+- Do NOT add new phrases not in the original`,
 
-  longer: `CRITICAL INSTRUCTION: Make this SIGNIFICANTLY longer.
-- Expand by AT LEAST 40-50% more content
-- Add more context, details, and examples
+  longer: `MODIFICATION: Make this longer.
+- Expand by 30-50%
+- Add context and detail using the user's vocabulary
 - Elaborate on key points
-- Add supporting information
-- This MUST be noticeably longer than the original`,
+- Preserve voice markers and sentence patterns
+- Do NOT introduce phrases outside the user's typical style`,
 
-  more_casual: `CRITICAL INSTRUCTION: Make this MUCH more casual and relaxed.
-- Use contractions (I'm, you're, we'll, etc.)
-- Use informal language and shorter sentences
-- Add friendly touches (hey, thanks, cheers, etc.)
-- Remove formal business language completely
-- Make it sound like talking to a friend
-- This MUST feel significantly more casual than the original`,
+  more_casual: `MODIFICATION: Shift toward Casual mode.
+- Use shorter sentences
+- Allow fragments if the user uses them
+- Relax formality while keeping the user's voice
+- Use contractions if the user typically uses them
+- Do NOT add slang, greetings, or phrases not evidenced in the user's profile
+- Stay within the user's vocabulary`,
 
-  more_professional: `CRITICAL INSTRUCTION: Make this MUCH more professional and polished.
-- Remove all contractions
-- Use formal business language
-- Remove casual expressions and slang
-- Use complete, well-structured sentences
-- Add professional courtesies
-- This MUST feel significantly more formal than the original`,
+  more_professional: `MODIFICATION: Shift toward Professional mode.
+- Use complete sentences
+- Reduce contractions
+- Add appropriate structure
+- Keep the user's voice markers
+- Do NOT add corporate jargon not in the user's profile`,
 
-  more_like_me: `CRITICAL INSTRUCTION: Intensify the personal voice characteristics.
-- Use MORE of the signature phrases from the voice profile
-- Emphasize the unique vocabulary patterns
-- Make sentence structure match the profile more closely
-- This should sound UNMISTAKABLY like the user's voice`,
+  more_like_me: `MODIFICATION: Intensify personal voice.
+- Increase use of the user's signature phrases
+- Match their typical sentence rhythm more closely
+- Follow their message arc pattern
+- Use their preferred openings/closings
+- Remove any phrases that feel generic or AI-like`,
 
-  clearer: `CRITICAL INSTRUCTION: Make this MUCH clearer and easier to understand.
-- Break complex sentences into simpler ones
-- Use plain language instead of jargon
-- Organize information logically
-- Add transition words for flow
-- Remove ambiguity
-- A 10-year-old should be able to understand the main point`,
+  clearer: `MODIFICATION: Improve clarity.
+- Simplify complex sentences
+- Use plain language
+- Improve logical flow
+- Keep the user's voice and vocabulary
+- Do NOT introduce new phrases`,
 
-  audience_team: `CRITICAL INSTRUCTION: Rewrite for an internal team audience.
-- Use casual, friendly language
-- Assume shared context and knowledge
-- Be direct and skip formalities
-- Use "we" and "us" language
-- Keep it brief and action-oriented`,
+  audience_team: `MODIFICATION: Adapt for internal team.
+- Shift toward Casual mode rules
+- Assume shared context
+- Be direct and brief
+- Use the user's casual patterns
+- Do NOT add slang or phrases not in the user's profile`,
 
-  audience_client: `CRITICAL INSTRUCTION: Rewrite for a client/external audience.
-- Be professional but warm
-- Explain context that might not be obvious
-- Focus on value and benefits to them
-- Be respectful of their time
-- Use "you" focused language`,
+  audience_client: `MODIFICATION: Adapt for client/external audience.
+- Shift toward Professional mode rules
+- Explain context where needed
+- Be warm but professional
+- Use the user's professional patterns
+- Stay within the user's vocabulary`,
 
-  audience_executive: `CRITICAL INSTRUCTION: Rewrite for an executive audience.
-- Lead with the key point/ask upfront
+  audience_executive: `MODIFICATION: Adapt for executive audience.
+- Shift toward Formal mode rules
+- Lead with the key point
 - Be extremely concise
-- Focus on business impact and decisions needed
-- Remove all unnecessary detail
-- Use bullet points if listing multiple items
-- Maximum 3-4 sentences unless absolutely necessary`,
+- Focus on decisions and impact
+- Use the user's formal patterns`,
 
-  rewrite: `CRITICAL INSTRUCTION: Generate a COMPLETELY DIFFERENT version.
-- Same core message but entirely new wording
-- Different sentence structures
-- Different opening and closing
-- This should NOT look like a minor edit - it should be a fresh take
-- Keep the same intent but express it in a new way`,
+  rewrite: `MODIFICATION: Generate a fresh version.
+- Same message, different structure
+- New opening and closing from the user's typical patterns
+- Vary sentence structure while maintaining voice
+- Do NOT introduce phrases outside the user's profile
+- This should still sound like the user`,
 }
