@@ -15,6 +15,11 @@ ENFORCEMENT: NO-NEW-PHRASES RULE
 - If a phrase is not evidenced, do NOT list it as an option (even as “casual”).
 - Any greeting/closing shown in examples must be directly evidenced OR explicitly labeled “Occasional/uncertain” and used sparingly.
 
+ENFORCEMENT: INTENSIFIERS & SLANG (EVIDENCE-ONLY)
+- Treat intensifiers and casual slang as “new phrases.”
+- Do not use words like “super,” “kinda,” “gigs,” “awesome,” “a bunch,” etc. unless they appear in the user’s samples.
+- If the samples do not show intensifiers, default to neutral phrasing: “really appreciate,” “I’d value,” “helpful,” “useful.”
+
 ENFORCEMENT: TONE DRIFT CHECK (MANDATORY)
 Before finalizing:
 - Scan output examples for “AI-cheer” language (e.g., “Cheers,” “Thanks a bunch,” “cool tips,” “gigs,” “give you a leg up,” “incredibly valuable,” “moreover”).
