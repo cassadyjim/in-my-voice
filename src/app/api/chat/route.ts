@@ -63,10 +63,12 @@ export async function POST(request: NextRequest) {
       conversation_id,
       message,
       writing_mode = 'general',
+      temperature = 0.7,
     } = body as {
       conversation_id?: string
       message: string
       writing_mode?: WritingMode
+      temperature?: number
     }
 
     if (!message?.trim()) {
@@ -165,11 +167,11 @@ Important:
     // Add current user message
     messages.push({ role: 'user', content: message })
 
-    // Call OpenAI
+    // Call OpenAI with user-specified creativity level
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
-      temperature: 0.7,
+      temperature: Math.max(0.1, Math.min(1.0, temperature)), // Clamp between 0.1 and 1.0
       max_tokens: 2000,
     })
 

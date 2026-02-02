@@ -1,18 +1,35 @@
 'use client'
 
 import { useState } from 'react'
+import { MessageModifyControls, type ModificationType } from './MessageModifyControls'
 import type { Message } from '@/types/chat'
 
 interface MessageListProps {
   messages: Message[]
   isLoading: boolean
+  conversationId: string | null
+  onMessageModified: (newMessage: Message) => void
 }
 
-export function MessageList({ messages, isLoading }: MessageListProps) {
+export function MessageList({
+  messages,
+  isLoading,
+  conversationId,
+  onMessageModified,
+}: MessageListProps) {
   return (
     <div className="space-y-6">
-      {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} />
+      {messages.map((message, index) => (
+        <MessageBubble
+          key={message.id}
+          message={message}
+          conversationId={conversationId}
+          onMessageModified={onMessageModified}
+          isLatestAssistant={
+            message.role === 'assistant' &&
+            index === messages.length - 1
+          }
+        />
       ))}
       {isLoading && (
         <div className="flex items-start gap-3">
@@ -34,8 +51,22 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   )
 }
 
-function MessageBubble({ message }: { message: Message }) {
+interface MessageBubbleProps {
+  message: Message
+  conversationId: string | null
+  onMessageModified: (newMessage: Message) => void
+  isLatestAssistant: boolean
+}
+
+function MessageBubble({
+  message,
+  conversationId,
+  onMessageModified,
+  isLatestAssistant,
+}: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
+  const [isModifying, setIsModifying] = useState(false)
+  const [showModifyControls, setShowModifyControls] = useState(false)
   const isUser = message.role === 'user'
 
   const handleCopy = async () => {
@@ -48,6 +79,33 @@ function MessageBubble({ message }: { message: Message }) {
     }
   }
 
+  const handleModify = async (type: ModificationType) => {
+    if (!conversationId || isModifying) return
+
+    setIsModifying(true)
+    try {
+      const res = await fetch('/api/chat/modify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          original_content: message.content,
+          modification_type: type,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        onMessageModified(data.message)
+        setShowModifyControls(false)
+      }
+    } catch (err) {
+      console.error('Failed to modify:', err)
+    } finally {
+      setIsModifying(false)
+    }
+  }
+
   if (isUser) {
     return (
       <div className="flex items-start gap-3 justify-end">
@@ -56,7 +114,7 @@ function MessageBubble({ message }: { message: Message }) {
             <p className="whitespace-pre-wrap">{message.content}</p>
           </div>
         </div>
-        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm font-medium">
+        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm font-medium flex-shrink-0">
           You
         </div>
       </div>
@@ -74,22 +132,45 @@ function MessageBubble({ message }: { message: Message }) {
             <div className="whitespace-pre-wrap">{message.content}</div>
           </div>
 
-          {/* Copy button */}
-          <button
-            onClick={handleCopy}
-            className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-500 hover:text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-            title="Copy to clipboard"
-          >
-            {copied ? (
-              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
+          {/* Action buttons */}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={handleCopy}
+              className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-500 hover:text-gray-700 shadow-sm"
+              title="Copy to clipboard"
+            >
+              {copied ? (
+                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={() => setShowModifyControls(!showModifyControls)}
+              className={`p-1.5 rounded-lg shadow-sm ${
+                showModifyControls
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'bg-white/80 hover:bg-white text-gray-500 hover:text-gray-700'
+              }`}
+              title="Modify this message"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-            )}
-          </button>
+            </button>
+          </div>
+
+          {/* Modification controls */}
+          {showModifyControls && (
+            <MessageModifyControls
+              onModify={handleModify}
+              isLoading={isModifying}
+            />
+          )}
         </div>
 
         {/* Timestamp */}

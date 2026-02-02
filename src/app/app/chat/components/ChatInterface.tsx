@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 import { WritingModeSelector } from './WritingModeSelector'
+import { CreativitySlider } from './CreativitySlider'
 import type { Message, Conversation, WritingMode } from '@/types/chat'
 
 interface ChatInterfaceProps {
@@ -19,7 +20,14 @@ export function ChatInterface({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [writingMode, setWritingMode] = useState<WritingMode>('general')
+  const [creativity, setCreativity] = useState(0.7)
+  const [currentConvId, setCurrentConvId] = useState<string | null>(conversationId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Update currentConvId when conversationId prop changes
+  useEffect(() => {
+    setCurrentConvId(conversationId)
+  }, [conversationId])
 
   // Load conversation messages when conversationId changes
   useEffect(() => {
@@ -56,7 +64,7 @@ export function ChatInterface({
     // Optimistically add user message
     const tempUserMessage: Message = {
       id: `temp-${Date.now()}`,
-      conversation_id: conversationId || '',
+      conversation_id: currentConvId || '',
       role: 'user',
       content,
       created_at: new Date().toISOString(),
@@ -68,9 +76,10 @@ export function ChatInterface({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conversation_id: conversationId,
+          conversation_id: currentConvId,
           message: content,
           writing_mode: writingMode,
+          temperature: creativity,
         }),
       })
 
@@ -81,8 +90,9 @@ export function ChatInterface({
 
       const data = await res.json()
 
-      // If this was a new conversation, notify parent
-      if (!conversationId && data.conversation_id) {
+      // If this was a new conversation, update state and notify parent
+      if (!currentConvId && data.conversation_id) {
+        setCurrentConvId(data.conversation_id)
         onConversationCreated(data.conversation_id)
       }
 
@@ -104,13 +114,22 @@ export function ChatInterface({
     }
   }
 
+  function handleMessageModified(newMessage: Message) {
+    setMessages((prev) => [...prev, newMessage])
+  }
+
   return (
     <div className="flex flex-col h-full">
-      {/* Writing Mode Selector */}
-      <div className="border-b border-gray-200 px-4 py-2">
+      {/* Controls Bar */}
+      <div className="border-b border-gray-200 px-4 py-2 flex flex-wrap items-center gap-4">
         <WritingModeSelector
           value={writingMode}
           onChange={setWritingMode}
+        />
+        <div className="h-6 w-px bg-gray-200 hidden sm:block" />
+        <CreativitySlider
+          value={creativity}
+          onChange={setCreativity}
         />
       </div>
 
@@ -127,11 +146,16 @@ export function ChatInterface({
               Just describe what you want to write, and I'll create it in your unique voice.
             </p>
             <div className="mt-6 text-sm text-gray-400">
-              Try: "Write an email to my team about the Q4 results"
+              Try: "Write an email to my team about the project deadline"
             </div>
           </div>
         ) : (
-          <MessageList messages={messages} isLoading={isLoading} />
+          <MessageList
+            messages={messages}
+            isLoading={isLoading}
+            conversationId={currentConvId}
+            onMessageModified={handleMessageModified}
+          />
         )}
         <div ref={messagesEndRef} />
       </div>
