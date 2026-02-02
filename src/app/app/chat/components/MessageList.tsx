@@ -66,6 +66,7 @@ function MessageBubble({
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
   const [isModifying, setIsModifying] = useState(false)
+  const [modifyError, setModifyError] = useState<string | null>(null)
   const isUser = message.role === 'user'
 
   const handleCopy = async () => {
@@ -79,10 +80,20 @@ function MessageBubble({
   }
 
   const handleModify = async (type: ModificationType) => {
-    if (!conversationId || isModifying) return
+    console.log('Modify requested:', { type, conversationId, messageId: message.id })
+
+    if (!conversationId) {
+      console.error('No conversation ID - cannot modify')
+      setModifyError('No conversation selected')
+      return
+    }
+    if (isModifying) return
 
     setIsModifying(true)
+    setModifyError(null)
+
     try {
+      console.log('Sending modify request...')
       const res = await fetch('/api/chat/modify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,12 +104,25 @@ function MessageBubble({
         }),
       })
 
-      if (res.ok) {
-        const data = await res.json()
+      const data = await res.json()
+      console.log('Modify response:', { ok: res.ok, status: res.status, data })
+
+      if (!res.ok) {
+        console.error('Modify API error:', data)
+        setModifyError(data.error || 'Failed to modify')
+        return
+      }
+
+      if (data.message) {
+        console.log('Calling onMessageModified with:', data.message)
         onMessageModified(data.message)
+      } else {
+        console.error('No message in response:', data)
+        setModifyError('Invalid response from server')
       }
     } catch (err) {
       console.error('Failed to modify:', err)
+      setModifyError('Network error - please try again')
     } finally {
       setIsModifying(false)
     }
@@ -152,6 +176,13 @@ function MessageBubble({
             onModify={handleModify}
             isLoading={isModifying}
           />
+
+          {/* Error display */}
+          {modifyError && (
+            <div className="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+              {modifyError}
+            </div>
+          )}
         </div>
 
         {/* Timestamp */}
