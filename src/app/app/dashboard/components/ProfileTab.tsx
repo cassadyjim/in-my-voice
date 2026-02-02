@@ -89,6 +89,11 @@ export function ProfileTab({ promptVersion }: ProfileTabProps) {
             <Button size="sm" onClick={handleCopyPrompt}>
               Copy Prompt
             </Button>
+            <Link href="/app/onboarding">
+              <Button variant="outline" size="sm">
+                🔄 Regenerate
+              </Button>
+            </Link>
           </div>
         </div>
 
