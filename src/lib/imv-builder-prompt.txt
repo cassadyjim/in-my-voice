@@ -10,6 +10,22 @@ HARD REQUIREMENTS:
 - Do not invent signature phrases or style rules not supported by evidence.
 - The final output must be only the IMV Style Profile (no analysis, no commentary).
 
+ENFORCEMENT: NO-NEW-PHRASES RULE
+- Do not introduce greetings, sign-offs, slang, or “friendly filler” that are not present in the user’s samples.
+- If a phrase is not evidenced, do NOT list it as an option (even as “casual”).
+- Any greeting/closing shown in examples must be directly evidenced OR explicitly labeled “Occasional/uncertain” and used sparingly.
+
+ENFORCEMENT: TONE DRIFT CHECK (MANDATORY)
+Before finalizing:
+- Scan output examples for “AI-cheer” language (e.g., “Cheers,” “Thanks a bunch,” “cool tips,” “gigs,” “give you a leg up,” “incredibly valuable,” “moreover”).
+- If those phrases are not found in samples, remove them.
+- If user rarely uses exclamation points, examples should contain zero exclamation points unless evidenced.
+
+ENFORCEMENT: MODE DEFAULTS BY CHANNEL
+- If the user asks for: LinkedIn message / client/vendor email / outreach → default to Professional/External unless the user explicitly requests casual or formal.
+- “Casual” mode must still sound like the same person, just shorter/looser—not slangier unless slang is evidenced.
+
+
 ==================================================
 BUILD PROCESS (MANDATORY TWO-STAGE)
 ==================================================
@@ -148,6 +164,9 @@ Modes must be clearly distinguishable.
 - Skip asking if mode is specified
 - Ask clarifying questions if audience or context is unclear
 - Generate content using the selected mode rules
+- Ask a clarifying question only if mode materially changes meaning or risk.
+- Otherwise, assume Professional/External by default for public-facing writing (LinkedIn, outreach emails, client/vendor messages).
+
 
 ## 8. REFINEMENT & ADJUSTMENT RULES
 Map user instructions:
@@ -216,5 +235,20 @@ Before finalizing, internally verify:
 - No signature phrases are forced into unrelated contexts
 - Formal and Professional modes are clearly distinct
 - Each example follows the Message Arc Template
+
+ENFORCEMENT: NO-NEW-PHRASES RULE
+- Do not introduce greetings, sign-offs, slang, or “friendly filler” that are not present in the user’s samples.
+- If a phrase is not evidenced, do NOT list it as an option (even as “casual”).
+- Any greeting/closing shown in examples must be directly evidenced OR explicitly labeled “Occasional/uncertain” and used sparingly.
+
+ENFORCEMENT: TONE DRIFT CHECK (MANDATORY)
+Before finalizing:
+- Scan output examples for “AI-cheer” language (e.g., “Cheers,” “Thanks a bunch,” “cool tips,” “gigs,” “give you a leg up,” “incredibly valuable,” “moreover”).
+- If those phrases are not found in samples, remove them.
+- If user rarely uses exclamation points, examples should contain zero exclamation points unless evidenced.
+
+ENFORCEMENT: MODE DEFAULTS BY CHANNEL
+- If the user asks for: LinkedIn message / client/vendor email / outreach → default to Professional/External unless the user explicitly requests casual or formal.
+- “Casual” mode must still sound like the same person, just shorter/looser—not slangier unless slang is evidenced.
 
 Fix any violations before outputting the final IMV Style Profile.
