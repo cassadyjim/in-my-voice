@@ -66,7 +66,6 @@ function MessageBubble({
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
   const [isModifying, setIsModifying] = useState(false)
-  const [showModifyControls, setShowModifyControls] = useState(false)
   const isUser = message.role === 'user'
 
   const handleCopy = async () => {
@@ -97,7 +96,6 @@ function MessageBubble({
       if (res.ok) {
         const data = await res.json()
         onMessageModified(data.message)
-        setShowModifyControls(false)
       }
     } catch (err) {
       console.error('Failed to modify:', err)
@@ -122,55 +120,38 @@ function MessageBubble({
   }
 
   return (
-    <div className="flex items-start gap-3 group">
+    <div className="flex items-start gap-3">
       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-sm flex-shrink-0">
         🎤
       </div>
       <div className="flex-1 min-w-0">
-        <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 relative">
+        <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 relative group">
           <div className="prose prose-sm max-w-none">
             <div className="whitespace-pre-wrap">{message.content}</div>
           </div>
 
-          {/* Action buttons */}
-          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={handleCopy}
-              className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-500 hover:text-gray-700 shadow-sm"
-              title="Copy to clipboard"
-            >
-              {copied ? (
-                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              )}
-            </button>
-            <button
-              onClick={() => setShowModifyControls(!showModifyControls)}
-              className={`p-1.5 rounded-lg shadow-sm ${
-                showModifyControls
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-white/80 hover:bg-white text-gray-500 hover:text-gray-700'
-              }`}
-              title="Modify this message"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          {/* Copy button - shows on hover */}
+          <button
+            onClick={handleCopy}
+            className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-500 hover:text-gray-700 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Copy to clipboard"
+          >
+            {copied ? (
+              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-            </button>
-          </div>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            )}
+          </button>
 
-          {/* Modification controls */}
-          {showModifyControls && (
-            <MessageModifyControls
-              onModify={handleModify}
-              isLoading={isModifying}
-            />
-          )}
+          {/* Modification controls - always visible */}
+          <MessageModifyControls
+            onModify={handleModify}
+            isLoading={isModifying}
+          />
         </div>
 
         {/* Timestamp */}

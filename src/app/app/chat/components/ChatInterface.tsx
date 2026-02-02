@@ -3,9 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
-import { WritingModeSelector } from './WritingModeSelector'
 import { CreativitySlider } from './CreativitySlider'
-import type { Message, Conversation, WritingMode } from '@/types/chat'
+import type { Message, Conversation } from '@/types/chat'
 
 interface ChatInterfaceProps {
   conversationId: string | null
@@ -19,7 +18,6 @@ export function ChatInterface({
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [writingMode, setWritingMode] = useState<WritingMode>('general')
   const [creativity, setCreativity] = useState(0.7)
   const [currentConvId, setCurrentConvId] = useState<string | null>(conversationId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -78,7 +76,6 @@ export function ChatInterface({
         body: JSON.stringify({
           conversation_id: currentConvId,
           message: content,
-          writing_mode: writingMode,
           temperature: creativity,
         }),
       })
@@ -121,12 +118,7 @@ export function ChatInterface({
   return (
     <div className="flex flex-col h-full">
       {/* Controls Bar */}
-      <div className="border-b border-gray-200 px-4 py-2 flex flex-wrap items-center gap-4">
-        <WritingModeSelector
-          value={writingMode}
-          onChange={setWritingMode}
-        />
-        <div className="h-6 w-px bg-gray-200 hidden sm:block" />
+      <div className="border-b border-gray-200 px-4 py-2 flex items-center">
         <CreativitySlider
           value={creativity}
           onChange={setCreativity}
@@ -172,7 +164,7 @@ export function ChatInterface({
         <MessageInput
           onSend={handleSendMessage}
           isLoading={isLoading}
-          placeholder={`Describe what you want to write (${writingMode === 'general' ? 'any format' : writingMode})...`}
+          placeholder="Describe what you want to write..."
         />
       </div>
     </div>

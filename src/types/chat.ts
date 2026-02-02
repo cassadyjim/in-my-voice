@@ -29,36 +29,10 @@ export type PlatformName = keyof PlatformExports
 export interface ChatRequest {
   conversation_id?: string // If null, creates new conversation
   message: string
-  writing_mode?: WritingMode
+  temperature?: number
 }
 
 export interface ChatResponse {
   conversation_id: string
   message: Message
-}
-
-export type WritingMode =
-  | 'general'
-  | 'email'
-  | 'linkedin'
-  | 'twitter'
-  | 'slack'
-  | 'formal_letter'
-
-export const WRITING_MODE_LABELS: Record<WritingMode, string> = {
-  general: 'General',
-  email: 'Email',
-  linkedin: 'LinkedIn Post',
-  twitter: 'Tweet/Thread',
-  slack: 'Slack Message',
-  formal_letter: 'Formal Letter',
-}
-
-export const WRITING_MODE_DESCRIPTIONS: Record<WritingMode, string> = {
-  general: 'General writing in your voice',
-  email: 'Professional or casual emails',
-  linkedin: 'LinkedIn posts and articles',
-  twitter: 'Tweets and Twitter threads',
-  slack: 'Slack messages and updates',
-  formal_letter: 'Formal business letters',
 }

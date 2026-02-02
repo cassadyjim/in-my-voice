@@ -1,48 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { OpenAI } from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
-import type { WritingMode } from '@/types/chat'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
-
-// Writing mode context additions
-const WRITING_MODE_CONTEXT: Record<WritingMode, string> = {
-  general: '',
-  email: `
-The user is writing an email. Structure your response as a complete email with:
-- Appropriate greeting
-- Clear body paragraphs
-- Professional sign-off
-Match the formality to the context (internal vs external, peer vs executive).`,
-  linkedin: `
-The user is writing a LinkedIn post. Make it:
-- Engaging hook in the first line
-- Easy to scan (short paragraphs, line breaks)
-- Professional but personable
-- Include a call-to-action or question at the end
-- Appropriate length (150-300 words for posts)`,
-  twitter: `
-The user is writing for Twitter/X. Make it:
-- Punchy and concise (under 280 characters for single tweets)
-- If it's a thread, number each tweet and keep them standalone but connected
-- Conversational and engaging
-- Use line breaks for readability`,
-  slack: `
-The user is writing a Slack message. Make it:
-- Concise and scannable
-- Friendly but professional
-- Use bullet points if listing multiple items
-- Direct and action-oriented`,
-  formal_letter: `
-The user is writing a formal letter. Structure it with:
-- Proper letter formatting (date, addresses if needed)
-- Formal salutation
-- Clear, well-organized paragraphs
-- Professional closing
-- Formal tone throughout`,
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,12 +24,10 @@ export async function POST(request: NextRequest) {
     const {
       conversation_id,
       message,
-      writing_mode = 'general',
       temperature = 0.7,
     } = body as {
       conversation_id?: string
       message: string
-      writing_mode?: WritingMode
       temperature?: number
     }
 
@@ -133,19 +93,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Build system prompt with IMV + writing mode context
+    // Build system prompt with IMV profile
     const systemPrompt = `${activePrompt.prompt_text}
 
 ---
 
 You are helping the user write content in their personal voice as defined above.
-${WRITING_MODE_CONTEXT[writing_mode]}
 
 Important:
 - Always match the user's voice profile
 - Use their signature phrases and vocabulary naturally
 - Never use words/phrases from their "avoid" list
-- Match the appropriate formality level for the task`
+- Adapt formality and style based on the user's request`
 
     // Build messages array for OpenAI
     const messages: OpenAI.ChatCompletionMessageParam[] = [
