@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { OpenAI } from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
-import { MODIFICATION_PROMPTS, type ModificationType } from '@/app/app/chat/components/MessageModifyControls'
+import { MODIFICATION_PROMPTS, type ModificationType } from '@/lib/modification-prompts'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
