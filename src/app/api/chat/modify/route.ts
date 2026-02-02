@@ -48,30 +48,30 @@ export async function POST(request: NextRequest) {
       .eq('is_active', true)
       .single()
 
-    // Build the modification request
+    // Build the modification request - MODIFICATION TAKES PRIORITY
     const modificationInstruction = MODIFICATION_PROMPTS[modification_type]
 
-    const systemPrompt = activePrompt
-      ? `${activePrompt.prompt_text}
+    // Put modification instruction FIRST, voice profile second
+    const systemPrompt = `You are a writing modification assistant. Your PRIMARY task is to apply the requested modification. This takes priority over everything else.
 
----
+${modificationInstruction}
 
-You are helping modify content while maintaining the user's voice profile above.`
-      : 'You are a helpful writing assistant.'
+${activePrompt ? `SECONDARY: While applying the modification, try to maintain elements of this voice profile where possible (but the modification instruction above takes priority):
+
+${activePrompt.prompt_text.substring(0, 1500)}...` : ''}
+
+OUTPUT RULES:
+- Output ONLY the modified text
+- No explanations, no preamble, no "Here's the modified version:"
+- Just the final modified content`
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt },
       {
         role: 'user',
-        content: `Here is the content to modify:
+        content: `Modify this content according to the instructions above:
 
----
-${original_content}
----
-
-Modification requested: ${modificationInstruction}
-
-Please provide the modified version only, without any explanation or preamble.`,
+${original_content}`,
       },
     ]
 
