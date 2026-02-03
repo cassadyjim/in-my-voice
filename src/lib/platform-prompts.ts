@@ -15,6 +15,52 @@ interface PromptSections {
 }
 
 /**
+ * IMV Workflow Instructions - added to all platform exports
+ */
+const IMV_WORKFLOW_INSTRUCTIONS = `
+===========================================
+INSTRUCTIONS FOR AI ASSISTANT:
+===========================================
+
+When the user includes "IMV" in their request, follow this workflow:
+
+STEP 1: DETECT IMV TRIGGER
+- Look for "IMV" anywhere in the user's message
+- Examples: "write me an email IMV", "draft this IMV", "respond to this IMV"
+
+STEP 2: PROMPT FOR MODE SELECTION
+Respond with:
+"I'll write that in your voice. What's the context?
+A) Casual/Internal - Team messages, quick updates, Slack
+B) Professional/External - Clients, vendors, business partners
+C) Formal/Executive - Board, legal, official correspondence
+Just reply with A, B, or C."
+
+STEP 3: WAIT FOR USER RESPONSE
+- User will respond with A, B, or C
+- Or user might say "casual", "professional", "formal"
+- Or user might describe context: "this is for my team" → use A
+
+STEP 4: GENERATE CONTENT IN SELECTED MODE
+Use the appropriate voice profile section based on their selection.
+
+STEP 5: OFFER MODIFICATION OPTIONS
+After delivering the generated content, ALWAYS show these options:
+
+"Want me to adjust this? Pick a number:
+1. 📉 Shorter
+2. 📈 Longer
+3. 😊 More Casual
+4. 👔 More Professional
+5. 🎯 More like me
+6. 💡 Clearer
+7. 👥 Different Audience
+8. 🔄 Complete Rewrite"
+
+If user selects an option, regenerate the content with that modification applied while maintaining the voice profile.
+`
+
+/**
  * Extract key sections from the new IMV prompt structure
  */
 function parsePromptSections(promptText: string): PromptSections {
@@ -97,9 +143,7 @@ function generateChatGPT(sections: PromptSections): string {
 
 ${sections.fullPrompt}
 
----
-
-When I ask you to write something, always use this voice profile. Match my tone, use my signature phrases naturally, and avoid the phrases in my avoidance patterns.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
   }
 
   return `You are a writing assistant that mimics my personal writing voice. Here is my voice profile:
@@ -116,15 +160,13 @@ ${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.map((a) => 
 
 ## Writing Modes
 
-**Casual/Internal:** ${sections.casualMode || 'Relaxed, friendly, contractions allowed'}
+**A) Casual/Internal:** ${sections.casualMode || 'Relaxed, friendly, contractions allowed'}
 
-**Professional/External:** ${sections.professionalMode || 'Clear, direct, business-appropriate'}
+**B) Professional/External:** ${sections.professionalMode || 'Clear, direct, business-appropriate'}
 
-**Formal/Executive:** ${sections.formalMode || 'Polished, structured, formal'}
+**C) Formal/Executive:** ${sections.formalMode || 'Polished, structured, formal'}
 
----
-
-When I ask you to write something, always use my voice profile above. Match my tone, use my signature phrases naturally, and never use the words/phrases I've flagged to avoid. Adapt formality based on context.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
 }
 
 /**
@@ -138,7 +180,7 @@ function generateClaude(sections: PromptSections): string {
 ${sections.fullPrompt}
 </voice_profile>
 
-Please write all responses using my voice profile above. Match my tone and vocabulary. Never use phrases from my avoidance patterns.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
   }
 
   return `<voice_profile>
@@ -155,13 +197,13 @@ ${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.map((a) => 
 </avoidance_patterns>
 
 <modes>
-<casual>${sections.casualMode || 'Relaxed, friendly tone'}</casual>
-<professional>${sections.professionalMode || 'Clear, direct, business tone'}</professional>
-<formal>${sections.formalMode || 'Polished, structured, formal tone'}</formal>
+<casual label="A">${sections.casualMode || 'Relaxed, friendly tone'}</casual>
+<professional label="B">${sections.professionalMode || 'Clear, direct, business tone'}</professional>
+<formal label="C">${sections.formalMode || 'Polished, structured, formal tone'}</formal>
 </modes>
 </voice_profile>
 
-Please write all responses using my voice profile above. Match my tone and vocabulary. Never use phrases from my avoidance patterns. Adapt formality based on context.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
 }
 
 /**
@@ -187,11 +229,11 @@ function generateCopilot(sections: PromptSections): string {
 **Never use:** ${sections.avoidancePatterns.slice(0, 5).join(' | ') || 'Generic AI phrases'}
 
 **Modes:**
-- Casual: Relaxed, contractions OK
-- Professional: Clear and direct
-- Formal: Structured, polished
+- A) Casual: Relaxed, contractions OK
+- B) Professional: Clear and direct
+- C) Formal: Structured, polished
 
-Write in my voice. Adapt formality based on context.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
 }
 
 /**
@@ -205,9 +247,7 @@ function generateGemini(sections: PromptSections): string {
 
 ${sections.fullPrompt}
 
----
-
-Instructions: Always write in my voice using the profile above. Adapt formality based on context.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
   }
 
   return `I want you to write in my personal voice. Here's my detailed voice profile:
@@ -223,18 +263,16 @@ ${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.slice(0, 8)
 
 **Writing Modes:**
 
-1. **Casual Mode** (for internal comms, friends, Slack):
+A) **Casual Mode** (for internal comms, friends, Slack):
 ${sections.casualMode || 'Relaxed, friendly, contractions allowed'}
 
-2. **Professional Mode** (for clients, external emails):
+B) **Professional Mode** (for clients, external emails):
 ${sections.professionalMode || 'Clear, direct, business-appropriate'}
 
-3. **Formal Mode** (for executives, official documents):
+C) **Formal Mode** (for executives, official documents):
 ${sections.formalMode || 'Polished, structured, formal'}
 
----
-
-Instructions: Always write in my voice using the profile above. Incorporate my vocabulary naturally. Avoid my avoidance patterns. Adapt formality based on context.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
 }
 
 /**
@@ -250,7 +288,7 @@ You are helping me write content in my personal voice. Here is my complete voice
 
 ${sections.fullPrompt}
 
-Always write in my voice. Adapt formality based on context.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
   }
 
   return `VOICE PROFILE INSTRUCTIONS
@@ -267,11 +305,11 @@ PHRASES TO AVOID:
 ${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.slice(0, 6).map((a) => `- ${a}`).join('\n') : '- Generic AI-sounding phrases'}
 
 FORMALITY LEVELS:
-- Casual: Relaxed, conversational, contractions allowed
-- Professional: Clear, direct, business-appropriate
-- Formal: Polished, structured, executive-level
+- A) Casual: Relaxed, conversational, contractions allowed
+- B) Professional: Clear, direct, business-appropriate
+- C) Formal: Polished, structured, executive-level
 
-Always write in my voice. Adapt formality based on context.`
+${IMV_WORKFLOW_INSTRUCTIONS}`
 }
 
 /**
