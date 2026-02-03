@@ -5,68 +5,82 @@ import type { PlatformExports, PlatformName } from '@/types/chat'
 
 interface PromptSections {
   fullPrompt: string
-  coreTone: string
-  vocabularySignatures: string[]
-  antiPatterns: string[]
-  modeACasual: string
-  modeBProfessional: string
-  modeCFormal: string
+  voiceIdentity: string
+  coreVoice: string
+  signaturePatterns: string[]
+  avoidancePatterns: string[]
+  casualMode: string
+  professionalMode: string
+  formalMode: string
 }
 
 /**
- * Extract key sections from the IMV prompt text
+ * Extract key sections from the new IMV prompt structure
  */
 function parsePromptSections(promptText: string): PromptSections {
   const sections: PromptSections = {
     fullPrompt: promptText,
-    coreTone: '',
-    vocabularySignatures: [],
-    antiPatterns: [],
-    modeACasual: '',
-    modeBProfessional: '',
-    modeCFormal: '',
+    voiceIdentity: '',
+    coreVoice: '',
+    signaturePatterns: [],
+    avoidancePatterns: [],
+    casualMode: '',
+    professionalMode: '',
+    formalMode: '',
   }
 
-  // Extract tone analysis
-  const toneMatch = promptText.match(/\[TONE ANALYSIS\]([\s\S]*?)(?=\[|MODE|$)/i)
-  if (toneMatch) {
-    sections.coreTone = toneMatch[1].trim()
+  // Extract Voice Identity section
+  const identityMatch = promptText.match(/## 1\. VOICE IDENTITY[^\n]*\n([\s\S]*?)(?=## 2|$)/i)
+  if (identityMatch) {
+    sections.voiceIdentity = identityMatch[1].trim().substring(0, 500)
   }
 
-  // Extract vocabulary signatures
-  const vocabMatch = promptText.match(/\[VOCABULARY SIGNATURES\]([\s\S]*?)(?=\[|MODE|$)/i)
-  if (vocabMatch) {
-    sections.vocabularySignatures = vocabMatch[1]
+  // Extract Core Voice Foundation
+  const coreMatch = promptText.match(/## 2\. CORE VOICE FOUNDATION[^\n]*\n([\s\S]*?)(?=## 3|$)/i)
+  if (coreMatch) {
+    sections.coreVoice = coreMatch[1].trim().substring(0, 500)
+  }
+
+  // Extract Signature Patterns (Commonly Used Language)
+  const signatureMatch = promptText.match(/### A\. Commonly Used Language[^\n]*\n([\s\S]*?)(?=### B|## 4|$)/i)
+  if (signatureMatch) {
+    sections.signaturePatterns = signatureMatch[1]
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith('-') || line.startsWith('•') || line.startsWith('"'))
+      .map((line) => line.replace(/^[-•]\s*/, '').replace(/^"/, '').replace(/"$/, ''))
+      .filter((line) => line.length > 0)
+      .slice(0, 10)
+  }
+
+  // Extract Avoidance Patterns (Rarely or Never Used)
+  const avoidMatch = promptText.match(/### B\. Rarely or Never Used[^\n]*\n([\s\S]*?)(?=### C|## 4|$)/i)
+  if (avoidMatch) {
+    sections.avoidancePatterns = avoidMatch[1]
       .split('\n')
       .map((line) => line.trim())
       .filter((line) => line.startsWith('-') || line.startsWith('•'))
       .map((line) => line.replace(/^[-•]\s*/, ''))
+      .filter((line) => line.length > 0)
+      .slice(0, 10)
   }
 
-  // Extract anti-patterns (NEVER USE)
-  const neverMatch = promptText.match(/\[NEVER USE\]([\s\S]*?)(?=MODE|$)/i)
-  if (neverMatch) {
-    sections.antiPatterns = neverMatch[1]
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith('-') || line.startsWith('•'))
-      .map((line) => line.replace(/^[-•]\s*/, ''))
+  // Extract Casual Mode
+  const casualMatch = promptText.match(/### CASUAL[^\n]*\n([\s\S]*?)(?=### PROFESSIONAL|## 6|$)/i)
+  if (casualMatch) {
+    sections.casualMode = casualMatch[1].trim().substring(0, 400)
   }
 
-  // Extract modes
-  const modeAMatch = promptText.match(/MODE A[^:]*:([\s\S]*?)(?=MODE B|$)/i)
-  if (modeAMatch) {
-    sections.modeACasual = modeAMatch[1].trim()
+  // Extract Professional Mode
+  const professionalMatch = promptText.match(/### PROFESSIONAL[^\n]*\n([\s\S]*?)(?=### FORMAL|## 6|$)/i)
+  if (professionalMatch) {
+    sections.professionalMode = professionalMatch[1].trim().substring(0, 400)
   }
 
-  const modeBMatch = promptText.match(/MODE B[^:]*:([\s\S]*?)(?=MODE C|$)/i)
-  if (modeBMatch) {
-    sections.modeBProfessional = modeBMatch[1].trim()
-  }
-
-  const modeCMatch = promptText.match(/MODE C[^:]*:([\s\S]*?)(?=REMEMBER|$)/i)
-  if (modeCMatch) {
-    sections.modeCFormal = modeCMatch[1].trim()
+  // Extract Formal Mode
+  const formalMatch = promptText.match(/### FORMAL[^\n]*\n([\s\S]*?)(?=## 6|## 7|$)/i)
+  if (formalMatch) {
+    sections.formalMode = formalMatch[1].trim().substring(0, 400)
   }
 
   return sections
@@ -77,29 +91,40 @@ function parsePromptSections(promptText: string): PromptSections {
  * ChatGPT works well with conversational system prompts
  */
 function generateChatGPT(sections: PromptSections): string {
+  // If sections are empty, return the full prompt with a wrapper
+  if (!sections.coreVoice && !sections.voiceIdentity) {
+    return `You are a writing assistant that mimics my personal writing voice. Here is my complete voice profile:
+
+${sections.fullPrompt}
+
+---
+
+When I ask you to write something, always use this voice profile. Match my tone, use my signature phrases naturally, and avoid the phrases in my avoidance patterns.`
+  }
+
   return `You are a writing assistant that mimics my personal writing voice. Here is my voice profile:
 
 ## My Writing Voice
 
-${sections.coreTone}
+${sections.voiceIdentity || sections.coreVoice}
 
 ## Signature Phrases & Vocabulary
-${sections.vocabularySignatures.map((v) => `- ${v}`).join('\n')}
+${sections.signaturePatterns.length > 0 ? sections.signaturePatterns.map((v) => `- ${v}`).join('\n') : '- Use natural, authentic language from my profile'}
 
-## Words/Phrases to AVOID
-${sections.antiPatterns.map((a) => `- ${a}`).join('\n')}
+## Phrases to AVOID
+${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.map((a) => `- ${a}`).join('\n') : '- Avoid generic AI-sounding phrases'}
 
 ## Writing Modes
 
-**Casual/Internal:** ${sections.modeACasual.substring(0, 200)}...
+**Casual/Internal:** ${sections.casualMode || 'Relaxed, friendly, contractions allowed'}
 
-**Professional/External:** ${sections.modeBProfessional.substring(0, 200)}...
+**Professional/External:** ${sections.professionalMode || 'Clear, direct, business-appropriate'}
 
-**Formal/Executive:** ${sections.modeCFormal.substring(0, 200)}...
+**Formal/Executive:** ${sections.formalMode || 'Polished, structured, formal'}
 
 ---
 
-When I ask you to write something, always use my voice profile above. Match my tone, use my signature phrases naturally, and never use the words/phrases I've flagged to avoid. Ask me which mode (casual, professional, or formal) if it's not clear from context.`
+When I ask you to write something, always use my voice profile above. Match my tone, use my signature phrases naturally, and never use the words/phrases I've flagged to avoid. Adapt formality based on context.`
 }
 
 /**
@@ -107,27 +132,36 @@ When I ask you to write something, always use my voice profile above. Match my t
  * Claude responds well to XML-structured prompts
  */
 function generateClaude(sections: PromptSections): string {
+  // If sections are empty, return the full prompt with XML wrapper
+  if (!sections.coreVoice && !sections.voiceIdentity) {
+    return `<voice_profile>
+${sections.fullPrompt}
+</voice_profile>
+
+Please write all responses using my voice profile above. Match my tone and vocabulary. Never use phrases from my avoidance patterns.`
+  }
+
   return `<voice_profile>
 <description>
-${sections.coreTone}
+${sections.voiceIdentity || sections.coreVoice}
 </description>
 
-<vocabulary>
-${sections.vocabularySignatures.map((v) => `<phrase>${v}</phrase>`).join('\n')}
-</vocabulary>
+<signature_phrases>
+${sections.signaturePatterns.length > 0 ? sections.signaturePatterns.map((v) => `<phrase>${v}</phrase>`).join('\n') : '<phrase>Use natural, authentic language</phrase>'}
+</signature_phrases>
 
-<banned_phrases>
-${sections.antiPatterns.map((a) => `<avoid>${a}</avoid>`).join('\n')}
-</banned_phrases>
+<avoidance_patterns>
+${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.map((a) => `<avoid>${a}</avoid>`).join('\n') : '<avoid>Generic AI-sounding phrases</avoid>'}
+</avoidance_patterns>
 
 <modes>
-<casual>${sections.modeACasual.substring(0, 300)}</casual>
-<professional>${sections.modeBProfessional.substring(0, 300)}</professional>
-<formal>${sections.modeCFormal.substring(0, 300)}</formal>
+<casual>${sections.casualMode || 'Relaxed, friendly tone'}</casual>
+<professional>${sections.professionalMode || 'Clear, direct, business tone'}</professional>
+<formal>${sections.formalMode || 'Polished, structured, formal tone'}</formal>
 </modes>
 </voice_profile>
 
-Please write all responses using my voice profile above. Match my tone and vocabulary. Never use phrases from the banned list. If the formality level isn't clear, ask which mode I prefer.`
+Please write all responses using my voice profile above. Match my tone and vocabulary. Never use phrases from my avoidance patterns. Adapt formality based on context.`
 }
 
 /**
@@ -135,28 +169,29 @@ Please write all responses using my voice profile above. Match my tone and vocab
  * Copilot works best with concise, bullet-point instructions
  */
 function generateCopilot(sections: PromptSections): string {
-  // Extract just the key descriptors from tone
-  const toneKeywords = sections.coreTone
+  // Extract key descriptors from voice identity
+  const voiceSummary = (sections.voiceIdentity || sections.coreVoice || 'Direct, authentic, personal')
     .split(/[.,;]/)
     .slice(0, 3)
     .map((s) => s.trim())
     .filter(Boolean)
     .join(', ')
+    .substring(0, 150)
 
   return `# My Writing Voice Profile
 
-**Tone:** ${toneKeywords}
+**Tone:** ${voiceSummary}
 
-**Use these phrases:** ${sections.vocabularySignatures.slice(0, 5).join(' | ')}
+**Use these phrases:** ${sections.signaturePatterns.slice(0, 5).join(' | ') || 'Natural, authentic language'}
 
-**Never use:** ${sections.antiPatterns.slice(0, 5).join(' | ')}
+**Never use:** ${sections.avoidancePatterns.slice(0, 5).join(' | ') || 'Generic AI phrases'}
 
 **Modes:**
 - Casual: Relaxed, contractions OK
 - Professional: Clear and direct
 - Formal: Structured, polished
 
-Write in my voice. Ask for mode if unclear.`
+Write in my voice. Adapt formality based on context.`
 }
 
 /**
@@ -164,31 +199,42 @@ Write in my voice. Ask for mode if unclear.`
  * Gemini handles detailed instructions well
  */
 function generateGemini(sections: PromptSections): string {
+  // If sections are empty, return the full prompt
+  if (!sections.coreVoice && !sections.voiceIdentity) {
+    return `I want you to write in my personal voice. Here's my detailed voice profile:
+
+${sections.fullPrompt}
+
+---
+
+Instructions: Always write in my voice using the profile above. Adapt formality based on context.`
+  }
+
   return `I want you to write in my personal voice. Here's my detailed voice profile:
 
-**Core Tone & Style:**
-${sections.coreTone}
+**Core Voice & Style:**
+${sections.voiceIdentity || sections.coreVoice}
 
 **My Signature Vocabulary:**
-${sections.vocabularySignatures.slice(0, 8).map((v) => `• ${v}`).join('\n')}
+${sections.signaturePatterns.length > 0 ? sections.signaturePatterns.slice(0, 8).map((v) => `• ${v}`).join('\n') : '• Use natural, authentic language'}
 
-**Phrases I Never Use (banned list):**
-${sections.antiPatterns.slice(0, 8).map((a) => `• ${a}`).join('\n')}
+**Phrases to Avoid:**
+${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.slice(0, 8).map((a) => `• ${a}`).join('\n') : '• Generic AI-sounding phrases'}
 
 **Writing Modes:**
 
 1. **Casual Mode** (for internal comms, friends, Slack):
-${sections.modeACasual.substring(0, 250)}
+${sections.casualMode || 'Relaxed, friendly, contractions allowed'}
 
 2. **Professional Mode** (for clients, external emails):
-${sections.modeBProfessional.substring(0, 250)}
+${sections.professionalMode || 'Clear, direct, business-appropriate'}
 
 3. **Formal Mode** (for executives, official documents):
-${sections.modeCFormal.substring(0, 250)}
+${sections.formalMode || 'Polished, structured, formal'}
 
 ---
 
-Instructions: Always write in my voice using the profile above. Incorporate my vocabulary naturally. Avoid all banned phrases. Default to Professional mode unless I specify otherwise.`
+Instructions: Always write in my voice using the profile above. Incorporate my vocabulary naturally. Avoid my avoidance patterns. Adapt formality based on context.`
 }
 
 /**
@@ -196,24 +242,36 @@ Instructions: Always write in my voice using the profile above. Incorporate my v
  * Works across any LLM
  */
 function generateGeneric(sections: PromptSections): string {
+  // If sections are empty, return the full prompt
+  if (!sections.coreVoice && !sections.voiceIdentity) {
+    return `VOICE PROFILE INSTRUCTIONS
+
+You are helping me write content in my personal voice. Here is my complete voice profile:
+
+${sections.fullPrompt}
+
+Always write in my voice. Adapt formality based on context.`
+  }
+
   return `VOICE PROFILE INSTRUCTIONS
 
 You are helping me write content in my personal voice. Follow these guidelines:
 
-TONE: ${sections.coreTone.substring(0, 300)}
+VOICE DESCRIPTION:
+${(sections.voiceIdentity || sections.coreVoice).substring(0, 400)}
 
 VOCABULARY TO USE:
-${sections.vocabularySignatures.slice(0, 6).map((v) => `- ${v}`).join('\n')}
+${sections.signaturePatterns.length > 0 ? sections.signaturePatterns.slice(0, 6).map((v) => `- ${v}`).join('\n') : '- Use natural, authentic language'}
 
 PHRASES TO AVOID:
-${sections.antiPatterns.slice(0, 6).map((a) => `- ${a}`).join('\n')}
+${sections.avoidancePatterns.length > 0 ? sections.avoidancePatterns.slice(0, 6).map((a) => `- ${a}`).join('\n') : '- Generic AI-sounding phrases'}
 
 FORMALITY LEVELS:
 - Casual: Relaxed, conversational, contractions allowed
 - Professional: Clear, direct, business-appropriate
 - Formal: Polished, structured, executive-level
 
-Always write in my voice. Ask for clarification on formality level if needed.`
+Always write in my voice. Adapt formality based on context.`
 }
 
 /**
