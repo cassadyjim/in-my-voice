@@ -1,10 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { parsePrompt, formatDate, type ParsedPrompt } from '@/lib/prompt-parser'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { PlatformExports } from './PlatformExports'
@@ -23,29 +20,89 @@ interface ProfileTabProps {
   promptVersion: PromptVersion | null
 }
 
+// Extract a voice summary from the prompt text
+function extractVoiceSummary(promptText: string): string {
+  // Try to find the Voice Identity section
+  const identityMatch = promptText.match(/## 1\. VOICE IDENTITY[^\n]*\n([\s\S]*?)(?=##|$)/i)
+  if (identityMatch) {
+    const identityText = identityMatch[1].trim()
+    const sentences = identityText
+      .split(/[.!?]+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 20 && !s.startsWith('-') && !s.startsWith('•'))
+      .slice(0, 3)
+    if (sentences.length > 0) {
+      return sentences.join('. ') + '.'
+    }
+  }
+
+  // Fallback: try Core Voice Foundation
+  const coreMatch = promptText.match(/## 2\. CORE VOICE FOUNDATION[^\n]*\n([\s\S]*?)(?=##|$)/i)
+  if (coreMatch) {
+    const coreText = coreMatch[1].trim()
+    const lines = coreText
+      .split('\n')
+      .map(s => s.trim())
+      .filter(s => s.length > 10 && !s.startsWith('#'))
+      .slice(0, 3)
+    if (lines.length > 0) {
+      return lines.join(' ').substring(0, 300) + '...'
+    }
+  }
+
+  return 'Your personalized voice profile captures your unique writing style, tone, and communication patterns.'
+}
+
+// Get first N lines of prompt for preview
+function getPromptPreview(promptText: string, lines: number = 4): string {
+  return promptText
+    .split('\n')
+    .filter(line => line.trim().length > 0)
+    .slice(0, lines)
+    .join('\n')
+}
+
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 export function ProfileTab({ promptVersion }: ProfileTabProps) {
   const [showFullPrompt, setShowFullPrompt] = useState(false)
 
+  // No prompt saved yet - show create button
   if (!promptVersion) {
     return (
-      <Card className="p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-          <span className="text-3xl">✨</span>
+      <div className="max-w-4xl mx-auto">
+        {/* Welcome Hero */}
+        <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-10 text-white text-center">
+          <div className="w-20 h-20 mx-auto mb-6 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center">
+            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold mb-3">Welcome to In My Voice</h1>
+          <p className="text-slate-300 mb-8 max-w-lg mx-auto text-lg">
+            Create your personalized voice profile to start writing content that sounds authentically like you.
+          </p>
+          <Link href="/app/onboarding">
+            <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 font-semibold px-8 h-12 text-base">
+              Create Your Voice Profile
+              <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Button>
+          </Link>
         </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-2">
-          No Voice Profile Yet
-        </h3>
-        <p className="text-slate-600 mb-6">
-          Add your writing samples to generate your personalized IMV prompt.
-        </p>
-        <Link href="/app/onboarding">
-          <Button size="lg">Start Onboarding →</Button>
-        </Link>
-      </Card>
+      </div>
     )
   }
 
-  const parsed = parsePrompt(promptVersion.prompt_text)
+  const voiceSummary = extractVoiceSummary(promptVersion.prompt_text)
+  const promptPreview = getPromptPreview(promptVersion.prompt_text, 4)
 
   const handleCopyPrompt = async () => {
     try {
@@ -61,159 +118,136 @@ export function ProfileTab({ promptVersion }: ProfileTabProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with version info */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Your Voice Profile</h2>
-          <p className="text-slate-600">
-            Version {promptVersion.version_num} • Generated {formatDate(promptVersion.created_at)}
-          </p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Primary CTA - Start Writing */}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </div>
+            <div className="text-white">
+              <h2 className="text-xl font-semibold">Start Writing in Your Voice</h2>
+              <p className="text-slate-400 text-sm mt-1">
+                Create emails, messages, and content that sounds like you
+              </p>
+            </div>
+          </div>
+          <Link href="/app/chat">
+            <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 font-semibold px-6 h-11 whitespace-nowrap">
+              Open IMV Chat
+              <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Button>
+          </Link>
         </div>
-        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-          Active
-        </span>
       </div>
 
-      {/* Full Prompt Card */}
-      <Card className="p-6">
-        <div className="flex items-start justify-between mb-4">
+      {/* Voice Summary Card */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+            <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
           <div>
-            <h3 className="font-semibold text-slate-900">Your IMV Prompt</h3>
-            <p className="text-sm text-slate-600">Copy this and paste it into any AI assistant</p>
+            <h3 className="font-semibold text-slate-900">My Voice Summary</h3>
+            <p className="text-xs text-slate-500">How your writing style is captured</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowFullPrompt(!showFullPrompt)}>
-              {showFullPrompt ? 'Hide' : 'Show Full'}
-            </Button>
-            <Button size="sm" onClick={handleCopyPrompt}>
-              Copy Prompt
-            </Button>
-            <Link href="/app/onboarding">
-              <Button variant="outline" size="sm">
-                🔄 Regenerate
+        </div>
+        <p className="text-slate-600 leading-relaxed">
+          {voiceSummary}
+        </p>
+      </div>
+
+      {/* IMV Prompt Card */}
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900">Your IMV Prompt</h3>
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-medium">
+                  v{promptVersion.version_num}
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 mt-1">
+                Generated {formatDate(promptVersion.created_at)}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyPrompt}
+                className="text-slate-600"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copy
               </Button>
-            </Link>
+              <Link href="/app/onboarding">
+                <Button variant="outline" size="sm" className="text-slate-600">
+                  <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Regenerate
+                </Button>
+              </Link>
+            </div>
           </div>
+        </div>
+
+        {/* Prompt Preview */}
+        <div
+          className={`bg-slate-50 p-4 font-mono text-sm text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors ${
+            showFullPrompt ? 'max-h-96 overflow-y-auto' : 'max-h-32 overflow-hidden'
+          }`}
+          onClick={() => setShowFullPrompt(!showFullPrompt)}
+        >
+          <pre className="whitespace-pre-wrap">
+            {showFullPrompt ? promptVersion.prompt_text : promptPreview}
+          </pre>
+          {!showFullPrompt && (
+            <div className="mt-3 pt-3 border-t border-slate-200">
+              <span className="text-xs text-slate-500 font-sans flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                Click to expand full prompt
+              </span>
+            </div>
+          )}
         </div>
 
         {showFullPrompt && (
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg border max-h-96 overflow-y-auto">
-            <pre className="text-sm text-slate-800 whitespace-pre-wrap font-mono">
-              {promptVersion.prompt_text}
-            </pre>
+          <div className="p-3 bg-slate-50 border-t border-slate-200">
+            <button
+              onClick={() => setShowFullPrompt(false)}
+              className="text-xs text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+              Collapse
+            </button>
           </div>
         )}
 
-        <Alert className="mt-4 bg-blue-50 border-blue-200">
-          <AlertDescription className="text-blue-800">
-            <strong>How to use:</strong> Paste this prompt into ChatGPT, Claude, or Copilot.
-            Then add "IMV" to any request, and the AI will write in your voice!
-          </AlertDescription>
-        </Alert>
-      </Card>
-
-      {/* Voice Analysis Cards */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Tone Analysis */}
-        <Card className="p-6">
-          <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <span className="text-lg">🎯</span> Tone Analysis
-          </h3>
-          <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
-            {parsed.coreVoice.toneAnalysis}
+        <div className="p-4 bg-blue-50 border-t border-blue-100">
+          <p className="text-sm text-blue-700">
+            <strong className="font-medium">Tip:</strong> Copy this prompt into ChatGPT, Claude, or Copilot to write in your voice on any platform.
           </p>
-        </Card>
-
-        {/* Vocabulary Signatures */}
-        <Card className="p-6">
-          <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <span className="text-lg">💬</span> Vocabulary Signatures
-          </h3>
-          <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
-            {parsed.coreVoice.vocabularySignatures}
-          </p>
-        </Card>
-
-        {/* Anti-Patterns */}
-        <Card className="p-6 md:col-span-2">
-          <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <span className="text-lg">🚫</span> Things to Avoid
-          </h3>
-          <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
-            {parsed.coreVoice.antiPatterns}
-          </p>
-        </Card>
-      </div>
-
-      {/* Mode Examples */}
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Voice Modes</h3>
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Casual Mode */}
-          <Card className="p-6 border-green-200 bg-green-50">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">A</span>
-              <h4 className="font-semibold text-green-900">Casual / Internal</h4>
-            </div>
-            <p className="text-sm text-green-800 mb-2">Team messages, quick updates, Slack</p>
-            {parsed.modes.casual.example && parsed.modes.casual.example !== 'No example available' && (
-              <div className="mt-3 p-3 bg-white rounded border border-green-200">
-                <p className="text-xs text-slate-500 mb-1">Example:</p>
-                <p className="text-sm text-slate-700 italic">{parsed.modes.casual.example.slice(0, 150)}...</p>
-              </div>
-            )}
-          </Card>
-
-          {/* Professional Mode */}
-          <Card className="p-6 border-blue-200 bg-blue-50">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">B</span>
-              <h4 className="font-semibold text-blue-900">Professional / External</h4>
-            </div>
-            <p className="text-sm text-blue-800 mb-2">Clients, vendors, business partners</p>
-            {parsed.modes.professional.example && parsed.modes.professional.example !== 'No example available' && (
-              <div className="mt-3 p-3 bg-white rounded border border-blue-200">
-                <p className="text-xs text-slate-500 mb-1">Example:</p>
-                <p className="text-sm text-slate-700 italic">{parsed.modes.professional.example.slice(0, 150)}...</p>
-              </div>
-            )}
-          </Card>
-
-          {/* Formal Mode */}
-          <Card className="p-6 border-purple-200 bg-purple-50">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-sm">C</span>
-              <h4 className="font-semibold text-purple-900">Formal / Executive</h4>
-            </div>
-            <p className="text-sm text-purple-800 mb-2">Board, legal, official correspondence</p>
-            {parsed.modes.formal.example && parsed.modes.formal.example !== 'No example available' && (
-              <div className="mt-3 p-3 bg-white rounded border border-purple-200">
-                <p className="text-xs text-slate-500 mb-1">Example:</p>
-                <p className="text-sm text-slate-700 italic">{parsed.modes.formal.example.slice(0, 150)}...</p>
-              </div>
-            )}
-          </Card>
         </div>
       </div>
 
       {/* Platform Exports */}
       <PlatformExports />
-
-      {/* Quick Actions */}
-      <Card className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="font-semibold text-purple-900">Ready to write?</h3>
-            <p className="text-sm text-purple-700">Use IMV Chat to write content in your voice</p>
-          </div>
-          <Link href="/app/chat">
-            <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
-              Open IMV Chat →
-            </Button>
-          </Link>
-        </div>
-      </Card>
     </div>
   )
 }
